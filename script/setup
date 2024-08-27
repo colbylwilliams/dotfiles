@@ -1,0 +1,48 @@
+#!/bin/bash
+
+set -e
+
+# This script sets up the github/github codespaces repository for a github/github codespace.
+
+RED='\033[0;31m'
+GREEN='\033[0;32m'
+ORANGE='\033[0;33m'
+NC='\033[0m' # No Color
+
+# check if we are in a github/github codespace
+if [[ -n "$CODESPACES" && "$GITHUB_REPOSITORY" == "github/github" ]]; then
+
+    # if MOPILOT_TOKEN is set, clone the mopilot repo
+    if [ -n "$MOPILOT_TOKEN" ]; then
+        echo -e "${GREEN}Setting up mopilot${NC}"
+        export GH_TOKEN=$MOPILOT_TOKEN
+
+        echo -e "\n${GREEN}➡️ Cloning mopilot repo...\n${NC}"
+        gh repo clone colbylwilliams/mopilot /workspaces/mopilot
+
+        echo -e "\n${GREEN}➡️ Adding mopilot to VS Code workspace...\n${NC}"
+        code --add /workspaces/mopilot
+    fi
+
+    # setup the copilot-api
+    if [ ! -d "/workspaces/copilot-api" ]; then
+        echo -e "${GREEN}Setting up copilot-api${NC}"
+
+        pushd /workspaces/github > /dev/null
+            script/setup-codespaces-copilot-api -w
+        popd > /dev/null
+    fi
+
+    # setup the copilot-agents repo
+    if [ ! -d "/workspaces/copilot-agents" ]; then
+        echo -e "${GREEN}Setting up copilot-agents${NC}"
+
+        pushd /workspaces/mopilot > /dev/null
+            script/setup-codespaces-copilot-agents -w
+        popd > /dev/null
+    fi
+
+    echo -e "${GREEN}Done!${NC}"
+else
+    echo -e "${ORANGE}This script is intended to be run in a github/github codespace.${NC}"
+fi
