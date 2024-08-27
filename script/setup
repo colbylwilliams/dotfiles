@@ -14,14 +14,15 @@ if [[ -n "$CODESPACES" && "$GITHUB_REPOSITORY" == "github/github" ]]; then
 
     # if MOPILOT_TOKEN is set, clone the mopilot repo
     if [ -n "$MOPILOT_TOKEN" ]; then
-        echo -e "${GREEN}Setting up mopilot${NC}"
-        export GH_TOKEN=$MOPILOT_TOKEN
+        # setup the copilot-agents repo
+        if [ ! -d "/workspaces/mopilot" ]; then
 
-        echo -e "\n${GREEN}➡️ Cloning mopilot repo...\n${NC}"
-        gh repo clone colbylwilliams/mopilot /workspaces/mopilot
+            echo -e "${GREEN}Setting up mopilot${NC}"
+            export GH_TOKEN=$MOPILOT_TOKEN
 
-        echo -e "\n${GREEN}➡️ Adding mopilot to VS Code workspace...\n${NC}"
-        code --add /workspaces/mopilot
+            echo -e "\n${GREEN}➡️ Cloning mopilot repo...\n${NC}"
+            gh repo clone colbylwilliams/mopilot /workspaces/mopilot
+        fi
     fi
 
     # setup the copilot-api
@@ -29,7 +30,7 @@ if [[ -n "$CODESPACES" && "$GITHUB_REPOSITORY" == "github/github" ]]; then
         echo -e "${GREEN}Setting up copilot-api${NC}"
 
         pushd /workspaces/github > /dev/null
-            script/setup-codespaces-copilot-api -w
+            script/setup-codespaces-copilot-api
         popd > /dev/null
     fi
 
@@ -38,7 +39,7 @@ if [[ -n "$CODESPACES" && "$GITHUB_REPOSITORY" == "github/github" ]]; then
         echo -e "${GREEN}Setting up copilot-agents${NC}"
 
         pushd /workspaces/mopilot > /dev/null
-            script/setup-codespaces-copilot-agents -w
+            script/setup-codespaces-copilot-agents
         popd > /dev/null
     fi
 
