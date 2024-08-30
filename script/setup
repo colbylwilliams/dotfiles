@@ -22,6 +22,8 @@ if [[ -n "$CODESPACES" && "$GITHUB_REPOSITORY" == "github/github" ]]; then
 
             echo -e "\n${GREEN}➡️ Cloning mopilot repo...\n${NC}"
             gh repo clone colbylwilliams/mopilot /workspaces/mopilot
+
+            /workspaces/mopilot/script/setup-dotnev
         fi
     fi
 
