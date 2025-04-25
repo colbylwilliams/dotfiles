@@ -23,16 +23,17 @@ if [[ -n "$CODESPACES" && "$GITHUB_REPOSITORY" == "github/github" ]]; then
             echo -e "\n${GREEN}➡️ Cloning mopilot repo...\n${NC}"
             gh repo clone colbylwilliams/mopilot /workspaces/mopilot
         fi
+
+        if [ ! -d "/workspaces/sweagentd" ]; then
+            echo -e "${GREEN}Setting up sweagentd${NC}"
+            export GH_TOKEN=$GITHUB_TOKEN
+
+            echo -e "\n${GREEN}➡️ Cloning sweagentd repo...\n${NC}"
+            gh repo clone github/sweagentd /workspaces/sweagentd
+        fi
+
+        code --add /workspaces/mopilot /workspaces/sweagentd
     fi
-
-    # setup the other repos
-    # if [ ! -d "/workspaces/copilot-api" ]; then
-    #     echo -e "${GREEN}Setting up copilot-api${NC}"
-
-    #     pushd /workspaces/github > /dev/null
-    #         script/setup-codespaces-copilot-api
-    #     popd > /dev/null
-    # fi
 
     echo -e "${GREEN}Done!${NC}"
 else
