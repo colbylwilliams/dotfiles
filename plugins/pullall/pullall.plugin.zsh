@@ -16,6 +16,19 @@
 #   PULLALL_ROOT="$HOME/repos"     # base directory
 #   PULLALL_TIMEOUT=60             # per-repo timeout in seconds (default: 30)
 
+# Run a command with a timeout. Uses coreutils timeout (Linux/Codespaces)
+# or perl alarm (macOS) as a fallback.
+_pullall_run_with_timeout() {
+  local secs=$1; shift
+  if command -v timeout &>/dev/null; then
+    timeout "$secs" "$@"
+  elif command -v gtimeout &>/dev/null; then
+    gtimeout "$secs" "$@"
+  else
+    perl -e 'alarm shift; exec @ARGV' "$secs" "$@"
+  fi
+}
+
 pullall() {
   if (( ! ${#PULLALL_REPOS[@]} )); then
     echo "pullall: no repos configured."
@@ -61,72 +74,30 @@ pullall() {
       continue
     fi
 
-    # Run in a subshell so cd never leaks to the parent or other iterations
-    local result
-    result=$(
-      cd "$dir" || exit 1
+    local branch
+    branch=$(git -C "$dir" rev-parse --abbrev-ref HEAD 2>/dev/null)
 
-      local branch
-      branch=$(git rev-parse --abbrev-ref HEAD 2>/dev/null)
+    if [[ "$branch" != "main" ]]; then
+      echo "⏭️  on branch '$branch'"
+      skipped+=("$repo (on branch '$branch')")
+      continue
+    fi
 
-      if [[ "$branch" != "main" ]]; then
-        echo "SKIPPED:on branch '$branch'"
-        exit 0
-      fi
-
-      # GIT_TERMINAL_PROMPT=0 prevents credential popups from hanging the shell.
-      # --ff-only refuses to create merge commits, so the pull never opens an
-      # editor or pauses for conflict resolution.
-      local output
-      output=$(GIT_TERMINAL_PROMPT=0 git pull --ff-only 2>&1 &
-        local pid=$!
-        (
-          sleep "$timeout_secs"
-          kill "$pid" 2>/dev/null
-        ) &
-        local watchdog=$!
-        wait "$pid" 2>/dev/null
-        local rc=$?
-        kill "$watchdog" 2>/dev/null
-        wait "$watchdog" 2>/dev/null
-        exit "$rc"
-      )
-      local rc=$?
-
-      if [[ $rc -ne 0 ]]; then
-        echo "FAILED:$output"
-        exit 1
-      fi
-
-      echo "PULLED:$output"
-      exit 0
-    )
+    # GIT_TERMINAL_PROMPT=0 prevents credential popups from hanging.
+    # --ff-only refuses to create merge commits so pull never blocks.
+    local output
+    output=$(GIT_TERMINAL_PROMPT=0 _pullall_run_with_timeout \
+      "$timeout_secs" git -C "$dir" pull --ff-only 2>&1)
     local rc=$?
 
-    # Parse the structured result
-    local tag="${result%%:*}"
-    local body="${result#*:}"
-
-    case "$tag" in
-      SKIPPED)
-        echo "⏭️  $body"
-        skipped+=("$repo ($body)")
-        ;;
-      PULLED)
-        echo "✅  $body"
-        pulled+=("$repo")
-        ;;
-      FAILED)
-        echo "🚨  pull failed"
-        echo "$body"
-        failed+=("$repo")
-        ;;
-      *)
-        echo "🚨  unexpected error"
-        [[ -n "$result" ]] && echo "$result"
-        failed+=("$repo")
-        ;;
-    esac
+    if [[ $rc -ne 0 ]]; then
+      echo "🚨  pull failed"
+      echo "$output"
+      failed+=("$repo")
+    else
+      echo "✅  $output"
+      pulled+=("$repo")
+    fi
   done
 
   # ── Summary ──
