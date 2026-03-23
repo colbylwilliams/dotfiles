@@ -8,7 +8,7 @@ ZSH_THEME="robbyrussell"
 DISABLE_AUTO_TITLE="true"
 
 # Which plugins would you like to load?
-plugins=(git wt)
+plugins=(git wt pullall)
 
 # Disable update prompt before sourcing OMZ so it takes effect
 DISABLE_UPDATE_PROMPT=true
@@ -23,3 +23,6 @@ source $ZSH/oh-my-zsh.sh
 # User configuration
 
 export PATH="/usr/local/go/bin:$HOME/go/bin:$PATH"
+
+# Configure PULLALL_REPOS in your local .zshrc (see plugins/pullall/README.md)
+PULLALL_REPOS=()

@@ -29,8 +29,8 @@
 [commit]
         verbose = true
 [rerere]
-        enabled = true
-        autoupdate = true
+        # enabled = true
+        # autoupdate = true
 [core]
         excludesfile = ~/.gitignore
 [rebase]

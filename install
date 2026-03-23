@@ -1,22 +1,16 @@
 #!/bin/bash
 
-create_symlinks() {
-    # Get the directory in which this script lives.
+# Symlink dotfiles only in Codespaces (locally they're managed by hand)
+if [ -n "$CODESPACES" ]; then
     script_dir=$(dirname "$(readlink -f "$0")")
-
-    # Get a list of all files in this directory that start with a dot.
-    files=$(find . -maxdepth 1 -type f -name ".*")
-
-    # Create a symbolic link to each file in the home directory.
+    files=$(find "$script_dir" -maxdepth 1 -type f -name ".*")
     for file in $files; do
-        name=$(basename $file)
+        name=$(basename "$file")
         echo "Creating symlink to $name in home directory."
-        rm -rf ~/$name
-        ln -s $script_dir/$name ~/$name
+        rm -rf ~/"$name"
+        ln -s "$file" ~/"$name"
     done
-}
-
-create_symlinks
+fi
 
 # Install oh-my-zsh
 sh -c "$(curl -fsSL https://raw.githubusercontent.com/ohmyzsh/ohmyzsh/master/tools/install.sh)" "" --unattended
@@ -27,21 +21,25 @@ install_plugins() {
     local plugin_dir="${ZSH_CUSTOM:-$HOME/.oh-my-zsh/custom}/plugins"
     mkdir -p "$plugin_dir"
 
-    if [ -d "$script_dir/plugins/wt" ]; then
-        rm -rf "$plugin_dir/wt"
-        ln -s "$script_dir/plugins/wt" "$plugin_dir/wt"
-        echo "Installed wt plugin."
-    fi
+    for plugin in wt pullall; do
+        if [ -d "$script_dir/plugins/$plugin" ]; then
+            rm -rf "$plugin_dir/$plugin"
+            ln -s "$script_dir/plugins/$plugin" "$plugin_dir/$plugin"
+            echo "Installed $plugin plugin."
+        fi
+    done
 }
 
 install_plugins
 
 # Enable wt plugin in .zshrc if not already present
 if grep -q '^plugins=(' ~/.zshrc 2>/dev/null; then
-    if ! grep -q 'plugins=.*\bwt\b' ~/.zshrc; then
-        sed -i.bak 's/^plugins=(\(.*\))/plugins=(\1 wt)/' ~/.zshrc && rm -f ~/.zshrc.bak
-        echo "Added wt to plugins in .zshrc."
-    fi
+    for plugin in wt pullall; do
+        if ! grep -q "plugins=.*\b${plugin}\b" ~/.zshrc; then
+            sed -i.bak "s/^plugins=(\(.*\))/plugins=(\1 ${plugin})/" ~/.zshrc && rm -f ~/.zshrc.bak
+            echo "Added ${plugin} to plugins in .zshrc."
+        fi
+    done
 fi
 
 # Change default shell to zsh if not already
