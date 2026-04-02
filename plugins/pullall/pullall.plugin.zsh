@@ -40,11 +40,11 @@ pullall() {
     echo '    "org/repo-two"'
     echo '  )'
     echo ""
-    echo "Repos are relative to \${PULLALL_ROOT:-\$HOME/GitHub}."
+    echo "Repos are relative to \${PULLALL_ROOT:-\$HOME/.copilot/repos}."
     return 1
   fi
 
-  local default_root="$HOME/GitHub"
+  local default_root="$HOME/.copilot/repos"
   if [[ -n "$CODESPACES" ]]; then
     default_root="/workspaces"
   fi
@@ -66,7 +66,7 @@ pullall() {
     local dir="$root/$repo"
 
     echo ""
-    echo "━━━ [$current/$total] $repo ━━━"
+    echo "━━ [$current/$total] $repo ━━"
 
     if [[ ! -d "$dir" ]]; then
       echo "⚠️  directory not found, skipping"
@@ -106,21 +106,24 @@ pullall() {
   echo "📋  Summary"
   echo "━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━"
 
+  echo "  Root: $root"
+  echo ""
+
   if (( ${#pulled} )); then
-    echo "  ✅  Pulled:  ${#pulled}"
-    for r in "${pulled[@]}"; do echo "        $r"; done
+    echo "  ✅  Pulled: ${#pulled}"
+    for r in "${pulled[@]}"; do echo "      $r"; done
   fi
   if (( ${#skipped} )); then
     echo "  ⏭️   Skipped: ${#skipped}"
-    for r in "${skipped[@]}"; do echo "        $r"; done
+    for r in "${skipped[@]}"; do echo "      $r"; done
   fi
   if (( ${#missing} )); then
     echo "  ❓  Missing: ${#missing}"
-    for r in "${missing[@]}"; do echo "        $r"; done
+    for r in "${missing[@]}"; do echo "      $r"; done
   fi
   if (( ${#failed} )); then
     echo "  🚨  Failed:  ${#failed}"
-    for r in "${failed[@]}"; do echo "        $r"; done
+    for r in "${failed[@]}"; do echo "      $r"; done
   fi
 
   echo ""
